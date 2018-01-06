@@ -1,10 +1,18 @@
+FROM golang:latest AS build
+
+ENV PROJECT /go/src/github.com/netlify/netlifyctl
+
+RUN mkdir -p $PROJECT
+
+WORKDIR ${PROJECT}
+
+RUN git clone https://github.com/netlify/netlifyctl.git . \
+  && curl https://glide.sh/get | sh \
+  && glide install \
+  && CGO_ENABLED=0 go build -o bin/netlifyctl main.go
+
 FROM alpine:3.6
 
-ENV NETLIFYCTL_VERSION 0.2.2
+ENV PROJECT /go/src/github.com/netlify/netlifyctl
 
-ADD https://github.com/netlify/netlifyctl/releases/download/v${NETLIFYCTL_VERSION}/netlifyctl-linux-amd64-${NETLIFYCTL_VERSION}.tar.gz /tmp/netlifyctl.tar.gz
-
-RUN cd /tmp \
-  && tar -zxvf netlifyctl.tar.gz \
-  && cp netlifyctl /usr/bin/netlifyctl \
-  && rm -rf /tmp/netlifyctl*
+COPY --from=build $PROJECT/bin/* /usr/bin/
