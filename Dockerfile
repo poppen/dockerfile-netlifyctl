@@ -7,8 +7,7 @@ RUN mkdir -p $PROJECT
 WORKDIR ${PROJECT}
 
 RUN git clone https://github.com/netlify/netlifyctl.git . \
-  && curl https://glide.sh/get | sh \
-  && glide install \
+  && go get -v ./... \
   && CGO_ENABLED=0 go build -o bin/netlifyctl main.go
 
 FROM alpine:3.6
