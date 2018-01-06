@@ -7,5 +7,4 @@ ADD https://github.com/netlify/netlifyctl/releases/download/v${NETLIFYCTL_VERSIO
 RUN cd /tmp \
   && tar -zxvf netlifyctl.tar.gz \
   && cp netlifyctl /usr/bin/netlifyctl \
-  && ln -s /usr/bin/netlifyctl /usr/bin/netlify \
   && rm -rf /tmp/netlifyctl*
