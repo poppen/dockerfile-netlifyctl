@@ -1,0 +1,51 @@
+version: 2.0
+
+jobs:
+
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: build
+          command: |
+            source ci/prepare.sh
+            docker info
+            docker_build
+            mkdir -p docker_cache
+            docker save -o docker_cache/docker_built.tar $IMAGE_TMP_NAME:$CI_BUILD_SHA
+      - save_cache:
+          key: docker-build-cache-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - docker_cache
+
+  deploy:
+    machine: true
+    steps:
+      - checkout
+      - restore_cache:
+          key: docker-build-cache-{{ .Branch }}-{{ .Revision }}
+      - run:
+          name: push to production
+          command: |
+            source ci/prepare.sh
+            docker info
+            docker load < docker_cache/docker_built.tar
+            docker_push zcong/netlifyctl:latest
+
+workflows:
+  version: 2
+  build-n-deploy:
+    jobs:
+      - build:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+      - deploy:
+          context: org-global
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v.*/

@@ -1,4 +1,4 @@
-FROM golang:latest AS build
+FROM golang:1.9 AS build
 
 ENV PROJECT /go/src/github.com/netlify/netlifyctl
 
@@ -13,5 +13,7 @@ RUN git clone https://github.com/netlify/netlifyctl.git . \
 FROM alpine:3.6
 
 ENV PROJECT /go/src/github.com/netlify/netlifyctl
+
+RUN apk add --no-cache ca-certificates
 
 COPY --from=build $PROJECT/bin/* /usr/bin/
