@@ -1,42 +1,27 @@
 #!/bin/sh
 
-export CI_BUILD_SHA="x${CI_BUILD_REF:0:8}"
-export IMAGE_TMP_NAME=$(echo "$CI_REGISTRY_IMAGE" | tr '[:upper:]' '[:lower:]')
+export CI_BUILD_SHA="x${CIRCLE_WORKFLOW_ID:0:8}"
+export IMAGE_TMP_NAME=$(echo "$CIRCLE_PROJECT_REPONAME" | tr '[:upper:]' '[:lower:]')
 
-# Automatically login docker
+# auto login
 docker() {
 	if [ ! -e ~/.docker/config.json ]; then
-		command docker login -u $GITLAB_USER_LOGIN -p $CI_BUILD_TOKEN registry.gitlab.com
+		command docker login -u $DOCKERCLOUD_USER -p $DOCKERCLOUD_APIKEY
 	fi
+
 	command docker "$@"
 }
 
-# Automatically install docker-cloud
-docker_cloud() {
-	if ! which docker-cloud >/dev/null 2>/dev/null; then
-		# Install Docker Cloud
-		apk --update add python py-pip >/dev/null
-		pip install docker-cloud >/dev/null
-	fi
-
-	command docker-cloud "$@"
+# push to docker cloud
+docker_push() {
+	echo Tag image...
+	docker tag $IMAGE_TMP_NAME:$CI_BUILD_SHA $1
+	echo Push to docker cloud...
+	docker push $1
 }
 
-docker_build_push() {
-	echo Building docker image...
-	docker build --pull -t $IMAGE_TMP_NAME:$1 .
-
-	echo Pushing docker image...
-	docker push $IMAGE_TMP_NAME:$1
-}
-
-docker_tag_push() {
-	echo Pulling docker image...
-	docker pull $IMAGE_TMP_NAME:$1 >/dev/null
-
-	echo Tagging docker image...
-	docker tag $IMAGE_TMP_NAME:$1 $IMAGE_TMP_NAME:$2
-
-	echo Pushing docker image...
-	docker push $IMAGE_TMP_NAME:$2
+# build image
+docker_build() {
+	echo Build image...
+	docker build -t $IMAGE_TMP_NAME:$CI_BUILD_SHA .
 }
