@@ -19,10 +19,13 @@ RUN git clone https://github.com/netlify/netlifyctl.git . \
   && CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/netlifyctl main.go \
   && goupx bin/netlifyctl
 
-FROM alpine:3.6
+FROM alpine:3.8
 
 ENV PROJECT /go/src/github.com/netlify/netlifyctl
 
 RUN apk add --no-cache ca-certificates
 
 COPY --from=build $PROJECT/bin/* /usr/bin/
+
+ENTRYPOINT ["/usr/bin/netlifyctl"]
+CMD ["help"]
